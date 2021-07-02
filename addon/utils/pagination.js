@@ -24,7 +24,14 @@ function paginateQuery(reference, paginationOptions, adapterOptions) {
   const { size, orderBy, page } = paginationOptions;
   const { lastSnapshot } = adapterOptions;
   let ref = reference;
-  if (orderBy) ref = ref.orderBy(...orderBy.split(':'));
+
+  if (orderBy) {
+    const [orderProps, dir] = orderBy.split(':');
+    orderProps.split(',').forEach((prop) => {
+      ref = ref.orderBy(prop, dir);
+    });
+  }
+
   if (page && lastSnapshot) ref = ref.startAfter(lastSnapshot);
   return ref.limit(size);
 }
