@@ -268,27 +268,26 @@ export default RESTAdapter.extend({
    * @override
    */
   findHasMany(store, snapshot, url, relationship) {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       const collectionRef = this.buildHasManyCollectionRef(store, snapshot, url, relationship);
-      const unsubscribe = collectionRef.onSnapshot((querySnapshot) => {
-        const requests = this.findHasManyRecords(store, relationship, querySnapshot);
+      const querySnapshot = await collectionRef.get();
 
-        Promise.all(requests).then((responses) => {
-          responses.map(payload => this._injectCollectionRef(payload, url));
-          updatePaginationMeta(relationship, responses);
-          addPaginatedPayload(snapshot, relationship, responses);
+      const requests = this.findHasManyRecords(store, relationship, querySnapshot);
 
-          store.listenForHasManyChanges(
-            snapshot.modelName,
-            snapshot.id,
-            relationship,
-            collectionRef,
-          );
+      Promise.all(requests).then((responses) => {
+        responses.map(payload => this._injectCollectionRef(payload, url));
+        updatePaginationMeta(relationship, responses);
+        addPaginatedPayload(snapshot, relationship, responses);
 
-          run(null, resolve, responses);
-          unsubscribe();
-        }).catch(error => run(null, reject, error));
-      }, error => run(null, reject, error));
+        store.listenForHasManyChanges(
+          snapshot.modelName,
+          snapshot.id,
+          relationship,
+          collectionRef,
+        );
+
+        run(null, resolve, responses);
+      }).catch(error => run(null, reject, error));
     });
   },
 
